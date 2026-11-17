@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Список заявок</h1>
+  
+  {% for contest in contests %}
+    <div>
+      {{ contest.id }}, {{ contest.title }}, {{ contest.price }},
+      {{ contest.description }}, {{ contest.comment }}
+      <br>
+      <a href="{% url 'contest:edit' contest.id %}">Редактировать заявку</a> 
+      | 
+      <a href="{% url 'contest:delete' contest.id %}">Удалить заявку</a>
+    </div>
+    {% if not forloop.last %}
+      <hr>
+    {% endif %}
+  {% empty %}
+    <p>Пока нет ни одной заявки.</p>
+  {% endfor %}
+{% endblock %}

@@ -1,0 +1,273 @@
+# Скопируйте в файл login.html код:
+
+<!-- templates/registration/login.html -->
+{% extends "base.html" %}
+<!-- Загружаем библиотеку для работы со стилями Bootstrap. -->
+{% load django_bootstrap5 %}
+
+{% block content %}
+  <!-- Если в запросе передан GET-параметр с указанием страницы, 
+    куда надо перейти после входа. -->
+  {% if next %}
+    <!-- Если пользователь уже залогинен, но не обладает нужными правами. -->
+    {% if user.is_authenticated %}
+      <p>
+        У вашего аккаунта нет доступа к этой странице.
+        Чтобы продолжить, войдите в систему с аккаунтом,
+        у которого есть доступ.
+      </p>
+    {% else %}
+      <p>
+        Пожалуйста, войдите в систему,
+        чтобы просматривать эту страницу.
+      </p>
+    {% endif %}
+  {% endif %}
+
+  <div class="card col-4 m-3">
+    <div class="card-header">
+      Войти в систему
+    </div>
+    <div class="card-body">
+      <!-- В атрибуте action указываем адрес, куда должен отправляться запрос. -->
+      <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        <!-- В скрытом поле передаём параметр next, 
+          это URL для переадресации после логина. -->
+        <input type="hidden" name="next" value="{{ next }}">
+        {% bootstrap_button button_type="submit" content="Войти" %}
+      </form>
+      <div>
+        <!-- Ссылка для перехода на страницу восстановления пароля. -->
+        <a href="{% url 'password_reset' %}">Забыли пароль?</a>
+      </div>
+    </div>
+  </div>
+{% endblock %} 
+
+
+
+
+# После логина будем перенаправлять пользователя на главную страницу — homepage.
+# Добавьте в файл с настройками константу LOGIN_REDIRECT_URL:
+
+# /settings.py
+...
+
+LOGIN_REDIRECT_URL = 'pages:homepage' 
+
+
+
+
+
+
+
+Страницей выхода из аккаунта управляет CBV LogoutView.
+Его шаблон — logged_out.html (название шаблона есть в документации);
+скопируйте в него код из листинга:
+
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Вы вышли из системы!</h2>
+{% endblock %} 
+
+
+
+
+
+
+# добавим в header.html все ссылки,
+# которые должны быть в навигации, вне зависимости от того, для какого пользователя они предназначены.
+<!-- ПЛЮС -->
+# Поставим условия для отображения ссылок в навигации:
+<!-- templates/includes/header.html -->
+<header>
+  <nav class="navbar shadow-sm">
+    <div class="container">
+      {% with request.resolver_match.view_name as view_name %}
+        <ul class="nav nav-pills">
+          <li class="nav-item">
+            <a class="nav-link {% if view_name == 'pages:homepage' %} active {% endif %}"
+              href="{% url 'pages:homepage' %}">
+              Главная
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if view_name == 'birthday:create' %} active {% endif %}"
+              href="{% url 'birthday:create' %}">
+              Калькулятор дней рождения
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if view_name == 'birthday:list' %} active {% endif %}" href="{% url 'birthday:list' %}">
+              Cписок дней рождения
+            </a>
+          </li>
+
+          <!-- Это блок ссылок для авторизованного пользователя -->
+          {% if user.is_authenticated %}
+            <span class="navbar-text">Пользователь: <b>{{ user.username }}</b></span>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'logout' %}">Выйти</a>
+            </li>
+          <!-- Конец блока ссылок для авторизованного пользователя -->
+
+          <!-- А здесь блок ссылок для неавторизованного пользователя -->
+          {% else %}
+            <li class="nav-item">
+              <a class="nav-link{% if view_name == 'login' %} active {% endif %}" href="{% url 'login' %}">Войти</a>
+            </li>        
+          {% endif %}
+          <!-- Конец блока ссылок для неавторизованного пользователя -->
+        </ul>
+      {% endwith %}
+    </div>
+  </nav>
+</header> 
+
+
+
+
+# шаблон registration/password_change_form.html
+
+{% extends "base.html" %}
+{% load django_bootstrap5 %}
+
+{% block content %}
+  <div class="card col-4 m-3">
+    <div class="card-header">
+      Поменять пароль
+    </div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        {% bootstrap_button button_type="submit" content="Поменять пароль" %}
+      </form>
+    </div>
+  </div>
+{% endblock %} 
+
+
+
+
+
+
+Класс PasswordChangeDoneView использует шаблон registration/password_change_done.html
+
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Пароль успешно изменён!</h2>
+  <p><a href="{% url 'pages:homepage' %}">На главную</a></p>
+{% endblock %} 
+
+
+
+
+
+
+
+В шаблон registration/password_reset_form.html вставьте код:
+
+{% extends "base.html" %}
+{% load django_bootstrap5 %}
+
+{% block content %}
+  <div class="card col-4 m-3">
+    <div class="card-header">
+      Восстановить пароль
+    </div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        {% bootstrap_button button_type="submit" content="Отправить" %}
+      </form>
+    </div>
+  </div>
+{% endblock %} 
+
+
+Проверить вид страницы можно по адресу http://127.0.0.1:8000/auth/password_reset/.
+
+
+
+
+
+
+
+
+registration/password_reset_done.html
+
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Письмо с инструкциями по восстановлению пароля отправлено</h2>
+  <p>
+    Мы отправили вам инструкцию по установке нового пароля
+    на указанный адрес электронной почты (если в нашей базе данных есть такой адрес). 
+    Вы должны получить её в ближайшее время.
+  </p>
+  <p>
+    Если вы не получили письмо, пожалуйста,
+    убедитесь, что вы ввели адрес, с которым Вы зарегистрировались,
+    и проверьте папку со спамом.
+  </p>
+  <p><a href="{% url 'pages:homepage' %}">На главную</a></p>
+{% endblock %} 
+
+
+Проверить вид страницы можно по адресу http://127.0.0.1:8000/auth/password_reset/done/.
+
+
+
+
+
+
+
+По умолчанию CBV PasswordResetConfirmView вызывает шаблон registration/password_reset_confirm.html. 
+
+{% extends "base.html" %}
+{% load django_bootstrap5 %}
+
+{% block content %}
+  <div class="card col-4 m-3">
+    <div class="card-header">
+      Восстановление пароля
+    </div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        {% bootstrap_button button_type="submit" content="Поменять пароль" %}
+      </form>
+    </div>
+  </div>
+{% endblock %} 
+
+Проверьте работу формы: перейдите по ссылке из письма.
+Вас переадресует на страницу с адресом /auth/reset/<uidb64>/set-password/
+на этой странице будет форма для смены пароля.
+
+
+
+
+
+
+
+
+Это просто страница с текстом, за её отображение отвечает CBV PasswordResetCompleteView.
+Этот класс работает с шаблоном registration/password_reset_complete.html. 
+
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Восстановление пароля завершено</h2>
+  <p>Ваш новый пароль сохранён. Теперь вы можете войти.</p>
+  <p><a href="{% url 'login' %}">Войти</a></p>
+{% endblock %} 
+
+Увидеть эту страницу можно по адресу http://127.0.0.1:8000/auth/reset/done/
